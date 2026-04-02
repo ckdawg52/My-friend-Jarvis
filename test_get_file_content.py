@@ -1,4 +1,4 @@
-from functions.get_files_content import get_file_content
+from functions.get_file_content import get_file_content
 
 # print(get_file_content("calculator", "lorem.text"))
 print(get_file_content("calculator", "main.py"))
