@@ -3,6 +3,17 @@ import argparse
 from google import genai
 from google.genai import types
 from dotenv import load_dotenv
+from call_function import available_functions
+
+system_prompt = system_prompt = """
+You are a helpful AI coding agent.
+
+When a user asks a question or makes a request, make a function call plan. You can perform the following operations:
+
+- List files and directories
+
+All paths you provide should be relative to the working directory. You do not need to specify the working directory in your function calls as it is automatically injected for security reasons.
+"""
 
 load_dotenv()
 api_key = os.environ.get("GEMINI_API_KEY")
@@ -23,14 +34,18 @@ messages = [types.Content(role="user", parts=[types.Part(text=args.user_prompt)]
 #        raise RuntimeError("No metadata found. Check if API key is present")
 #    print(welcome.text)
 
-request = client.models.generate_content(model='gemini-2.5-flash-image', contents=messages)
+request = client.models.generate_content(model='gemini-2.5-flash', contents=messages, config=types.GenerateContentConfig(tools=[available_functions], system_instruction=system_prompt))
 if request.usage_metadata == None:
     raise RuntimeError("No metadata found. Check if API key is present")
 if args.verbose:
     print(f"User prompt: {args.user_prompt}")
     print(f"Prompt tokens: {request.usage_metadata.prompt_token_count}")
     print(f"Response tokens: {request.usage_metadata.candidates_token_count}")
-print(request.text)
+if request.function_calls is None:
+    print(request.text)
+else: 
+    for function_call in request.function_calls:
+        print(f"Calling function: {function_call.name}({function_call.args})")
 
 def main():
     pass
